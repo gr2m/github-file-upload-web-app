@@ -110,9 +110,9 @@
           }
 
           const token = document.querySelector("#token-input").value;
-          const [owner, repo] = document.querySelector(
-            "#repository-input"
-          ).value;
+          const [owner, repo] = document
+            .querySelector("#repository-input")
+            .value.split("/");
           const filename = input.files[0].name;
 
           if (!token) {
