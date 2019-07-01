@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>GitHub File Upload Example</title>
+    <script type="module">
+      import { request } from "https://cdn.pika.dev/@octokit/request";
+      window.request = request;
+    </script>
+    <style>
+      * {
+        font-family: Helvetica, Arial;
+      }
+      html {
+        background: #eee;
+      }
+
+      body {
+        background: #fff;
+        border: 1px solid #ddd;
+        margin: 50px auto;
+        padding: 1em;
+        max-width: 800px;
+      }
+      input {
+        display: block;
+        width: 300px;
+        padding: 1em;
+      }
+      img {
+        max-width: 200px;
+        max-height: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Upload a file to GitHub</h1>
+
+    <p>
+      <label for="token-input">
+        Token:
+      </label>
+      <input
+        id="token-input"
+        placeholder="0123456789012345678901234567890123456789"
+      />
+      <small
+        >(<a
+          href="https://github.com/settings/tokens/new?scopes=repo"
+          target="_blank"
+          >Create a personal access token with repo access</a
+        >)</small
+      >
+    </p>
+
+    <p>
+      <label for="repository-input">
+        Repository:
+      </label>
+      <input id="repository-input" placeholder="owner/repo" />
+    </p>
+
+    <p>
+      <label for="token-input">
+        Upload image:
+      </label>
+      <input type="file" id="image-upload" />
+      <img id="image" />
+    </p>
+
+    <p>
+      <button id="upload-button">Upload</button>
+    </p>
+
+    <script>
+      function readURL(input) {
+        if (input.files && input.files[0]) {
+          const reader = new FileReader();
+
+          reader.onload = function(e) {
+            document
+              .querySelector("#image")
+              .setAttribute("src", e.target.result);
+          };
+
+          console.log(`-------- input.files[0] -------- `);
+          console.log(input.files[0]);
+          reader.readAsDataURL(input.files[0]);
+        }
+      }
+
+      document
+        .querySelector("#image-upload")
+        .addEventListener("change", function() {
+          console.log("CHANGE!!!");
+          readURL(this);
+        });
+
+      document
+        .querySelector("#upload-button")
+        .addEventListener("click", function() {
+          const reader = new FileReader();
+          const input = document.querySelector("#image-upload");
+
+          if (!input.files[0]) {
+            alert("no files selected");
+            return;
+          }
+
+          const token = document.querySelector("#token-input").value;
+          const [owner, repo] = document.querySelector(
+            "#repository-input"
+          ).value;
+          const filename = input.files[0].name;
+
+          if (!token) {
+            alert("No token provided");
+            return;
+          }
+
+          if (!owner || !repo) {
+            alert("Repository is not provided, must be in form <owner>/<repo>");
+            return;
+          }
+
+          reader.onload = function(e) {
+            const base64Content = e.target.result.split("base64,").pop();
+
+            request("PUT /repos/:owner/:repo/contents/:path", {
+              owner,
+              repo,
+              path: `uploads/${filename}`,
+              message: "check out my new shiny image",
+              content: base64Content,
+              branch: "upload-test",
+              headers: {
+                authorization: `token ${token}`
+              }
+            });
+          };
+
+          reader.readAsDataURL(input.files[0]);
+        });
+    </script>
+  </body>
+</html>
